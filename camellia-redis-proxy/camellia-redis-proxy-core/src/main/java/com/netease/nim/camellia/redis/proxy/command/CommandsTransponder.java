@@ -273,7 +273,7 @@ public class CommandsTransponder {
                                 * 1.Redis-Server设置CONFIG：notify-keyspace-events ""
                                 * 2.Redis-Proxy对所有CONFIG SET返回1，但不做任何处理
                                 */
-                                task.replyCompleted(IntegerReply.REPLY_1);
+                                task.replyCompleted(StatusReply.OK);
                                 hasCommandsSkip = true;
                                 continue;
                             }
