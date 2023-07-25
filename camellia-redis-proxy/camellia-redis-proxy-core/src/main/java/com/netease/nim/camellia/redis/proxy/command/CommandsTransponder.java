@@ -7,6 +7,7 @@ import com.netease.nim.camellia.redis.proxy.auth.HelloCommandUtil;
 import com.netease.nim.camellia.redis.proxy.cluster.ProxyClusterModeProcessor;
 import com.netease.nim.camellia.redis.proxy.enums.RedisKeyword;
 import com.netease.nim.camellia.redis.proxy.plugin.*;
+import com.netease.nim.camellia.redis.proxy.reply.IntegerReply;
 import com.netease.nim.camellia.redis.proxy.upstream.IUpstreamClientTemplate;
 import com.netease.nim.camellia.redis.proxy.upstream.IUpstreamClientTemplateFactory;
 import com.netease.nim.camellia.redis.proxy.upstream.connection.RedisConnectionHub;
@@ -261,7 +262,18 @@ public class CommandsTransponder {
                         if (objects.length > 1) {
                             String arg = Utils.bytesToString(objects[1]);
                             if (!arg.equalsIgnoreCase(RedisKeyword.GET.name())) {
-                                task.replyCompleted(new ErrorReply("command 'CONFIG' only support GET"));
+                                // task.replyCompleted(new ErrorReply("command 'CONFIG' only support GET"));
+
+                                /*
+                                * {@link org.springframework.session.data.redis.config.ConfigureNotifyKeyspaceEventsAction#configure} 会执行'SET CONFIG egX'；
+                                * {@link org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration#springSessionRedisMessageListenerContainer} 会创建监听器；
+                                * 当两个条件满足时，程序之间会接受到Session的监听信息，此时如果Session包含了非本项目的类，会出现ClassNotFoundException异常
+                                *
+                                * 处理方案是：
+                                * 1.Redis-Server设置CONFIG：notify-keyspace-events ""
+                                * 2.Redis-Proxy对所有CONFIG SET返回1，但不做任何处理
+                                */
+                                task.replyCompleted(IntegerReply.REPLY_1);
                                 hasCommandsSkip = true;
                                 continue;
                             }
